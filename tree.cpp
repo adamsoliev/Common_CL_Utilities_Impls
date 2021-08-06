@@ -1,58 +1,66 @@
 #include <iostream>
 #include <filesystem>
+#include <vector>
+#include <algorithm>
 
-namespace fs = std::filesystem;
+using namespace std;
+namespace fs = filesystem;
 
-void printCount(int dirs, int files) {
-    if (dirs == 1 && files == 1) {
-        std::cout << dirs << " directory, " << files << " file" << '\n';
+class Tree {
+private:
+    int dirs = 0;
+    int files = 0;
+    vector<string> inner_pointers = { "├── ", "│   " };
+    vector<string> outer_pointers = { "└── ", "    " };
+
+public:
+    void walk(const string& directory, const string& prefix) {
+        vector<fs::directory_entry> entries;
+
+        for (const auto& entry : fs::directory_iterator(directory)) {
+            if (entry.path().filename().string()[0] != '.') {
+                entries.push_back(entry);
+            }
+        }
+        sort(entries.begin(), entries.end(), [](const fs::directory_entry
+        &left, const fs::directory_entry &right) -> bool {
+            return left.path().filename() < right.path().filename();
+        });
+
+        for (int i = 0; i < entries.size(); ++i) {
+            fs::directory_entry entry = entries[i];
+            vector<string> pointers = i == entries.size() - 1 ? outer_pointers
+                    : inner_pointers;
+            cout << prefix << pointers[0] << entry.path().filename().string()
+            << endl;
+
+            if (entry.is_directory()) {
+                ++dirs;
+                walk(entry.path(), prefix + pointers[1]);
+            }
+            else if (entry.is_regular_file()) {
+                ++files;
+            }
+            // TODO: other types of files could also be added (e.g., links)
+        }
     }
-    else if (dirs == 1) {
-        std::cout << dirs << " directory, " << files << " files" << '\n';
+
+    void summary() const {
+        cout << "\n" << dirs << " directories, " << files << " files" << endl;
     }
-    else if (files == 1) {
-        std::cout << dirs << " directories, " << files << " file" << '\n';
-    }
-    else {
-        std::cout << dirs << " directories, " << files << " files" << '\n';
-    }
-}
+};
 
 
-void printPath(int _level, int &dirs, int &files, const fs::path& _path =
-        fs::current_path()) {
-  if (_level == 0)
-    std::cout << "\033[1;31m" << _path.filename().string() << "\033[0m/"
-              << std::endl;
-  for (const auto &path : fs::directory_iterator(_path)) {
-    std::string dirSign(_level * 3, '-');
-    std::string fileSign(_level * 3, ' ');
 
-    const fs::path &dirElement = path.path();
-    if (is_directory(dirElement)) {
-      ++dirs;
-      std::cout << dirSign << "|\033[1;31m" << dirElement.filename().string()
-                << "\033[0m\n";
-      printPath(_level + 1, dirs, files, dirElement);
-    } else if (is_regular_file(dirElement)) {
-      ++files;
-      std::cout << fileSign << "|=> " << dirElement.filename().string() << '\n';
-    }
-    }
-}
+
 int main(int argc, char **argv) {
-    int dirs = 0, files = 0;
+    Tree tree;
+    // TODO: error check (wrong input, etc)
+    string directory = argc == 1 ? "." : argv[1];
 
-    if (argc > 1) {
-        fs::path curDir = argv[1];
-        printPath(0, dirs, files, curDir); // print passed dir
-    }
-    else {
-        printPath(0, dirs, files); // default to current dir
-    }
-
-    printCount(dirs, files);
-
+    cout << directory << endl;
+    tree.walk(directory, "");
+    tree.summary();
 
     return 0;
 }
