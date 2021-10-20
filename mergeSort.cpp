@@ -7,6 +7,20 @@ void merge(vector<int> &nums, int left, int mid, int right) {
   auto left_half_size = mid - left + 1;
   auto right_half_size = right - mid;
 
+  vector<int> left_arr(nums.begin() + left, nums.begin() + mid + 1);
+  vector<int> right_arr(nums.begin() + mid + 1, nums.begin() + right + 1);
+
+  /*
+  // create arr arrays
+  cout << "\nNUMS: ";
+  atl::printV(nums);
+  cout << "left: " << left << ", mid: " << mid << ", right: " << right << endl;
+  cout << "LEFT: ";
+  atl::printV(left_arr);
+  cout << "RIGHT: ";
+  atl::printV(right_arr);
+
+  // old way of copying
   // create arr arrays
   vector<int> left_arr(left_half_size);
   vector<int> right_arr(right_half_size);
@@ -18,6 +32,7 @@ void merge(vector<int> &nums, int left, int mid, int right) {
   for (auto i = 0; i < right_half_size; ++i) {
     right_arr[i] = nums[mid + 1 + i];
   }
+  */
 
   auto idx_left_arr = 0, idx_right_arr = 0;
   auto idx_merged_arr = left;
